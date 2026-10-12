@@ -1,0 +1,6 @@
+{
+  "name": "ClipperPulse - AI Video Clipper & Viral Trend Studio",
+  "description": "Local & Cloud AI video repurposing studio that analyzes transcripts and visual cues for viral clipping, stylish animated subtitles, screenshot color grading, and multi-sector trend intelligence.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
