@@ -241,8 +241,23 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
     if (rawWords.length === 0) return null;
 
     const segDuration = Math.max(0.1, currentSegment.end - currentSegment.start);
-    const progress = Math.min(1, Math.max(0, (currentTime - currentSegment.start) / segDuration));
-    const activeWordIndex = Math.min(rawWords.length - 1, Math.floor(progress * rawWords.length));
+    let activeWordIndex = 0;
+    if (currentSegment.words && currentSegment.words.length > 0 && subtitleConfig.enableDynamicKaraoke !== false) {
+      const foundIdx = currentSegment.words.findIndex(
+        (w) => currentTime >= w.start && currentTime <= w.end
+      );
+      if (foundIdx !== -1) {
+        activeWordIndex = foundIdx;
+      } else {
+        const segDuration = Math.max(0.1, currentSegment.end - currentSegment.start);
+        const progress = Math.min(1, Math.max(0, (currentTime - currentSegment.start) / segDuration));
+        activeWordIndex = Math.min(rawWords.length - 1, Math.floor(progress * rawWords.length));
+      }
+    } else {
+      const segDuration = Math.max(0.1, currentSegment.end - currentSegment.start);
+      const progress = Math.min(1, Math.max(0, (currentTime - currentSegment.start) / segDuration));
+      activeWordIndex = Math.min(rawWords.length - 1, Math.floor(progress * rawWords.length));
+    }
 
     // Dynamic Creator Chunking: Alex Hormozi & Opus Clip chunk lines into 2-4 words
     // to prevent cognitive viewer overload and keep retention graphs high.
@@ -258,7 +273,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
     const getBackdropClass = () => {
       switch (subtitleConfig.backdropStyle) {
         case 'glass_pod':
-          return 'bg-black/65 backdrop-blur-xl px-5 py-3 rounded-2xl border border-white/20 shadow-[0_12px_40px_rgba(0,0,0,0.8)]';
+          return 'bg-black/75 backdrop-blur-xl px-5 py-3 rounded-2xl border border-white/20 shadow-[0_12px_40px_rgba(0,0,0,0.8)]';
         case 'dark_pill':
           return 'bg-black/85 px-4 py-2 rounded-xl border border-white/10 shadow-xl';
         case 'shadow_only':
@@ -286,6 +301,53 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
 
             const displayText = subtitleConfig.uppercase ? rawWord.toUpperCase() : rawWord;
             const customHighlight = subtitleConfig.highlightColor || '#FACC15';
+            const customPassed = subtitleConfig.passedWordColor || '#FFFFFF';
+            const customUpcoming = subtitleConfig.upcomingWordColor || '#94A3B8';
+            const customPower = subtitleConfig.powerWordColor || '#EF4444';
+            const customBox = subtitleConfig.highlightBoxColor || '#FEF08A';
+
+            // Multi-color cycling mode
+            const cycleColors = subtitleConfig.multiColorPalette || ['#FACC15', '#22D3EE', '#F43F5E', '#FFFFFF'];
+            const wordColor =
+              subtitleConfig.wordColorMode === 'multi_color_cycle'
+                ? cycleColors[idx % cycleColors.length]
+                : isActive
+                ? customHighlight
+                : isPowerWord
+                ? customPower
+                : isPassed
+                ? customPassed
+                : customUpcoming;
+
+            // Animation transforms
+            let animTransform = 'scale(1)';
+            const anim = subtitleConfig.wordAnimation || 'scale_bounce';
+            if (isActive) {
+              if (anim === 'scale_bounce') animTransform = 'scale(1.15) translateY(-2px)';
+              else if (anim === 'tilt_pop') animTransform = 'scale(1.2) rotate(-3deg) translateY(-2px)';
+              else if (anim === 'elastic_snap') animTransform = 'scale(1.22) translateY(-3px)';
+              else if (anim === 'neon_pulse') animTransform = 'scale(1.1)';
+              else if (anim === 'highlighter_wipe') animTransform = 'scale(1.05)';
+              else if (anim === 'karaoke_sweep') animTransform = 'scale(1.08)';
+            }
+
+            // Vox Kinetic Marker Box
+            if (subtitleConfig.preset === 'vox_highlighter' || subtitleConfig.wordColorMode === 'highlighter_box') {
+              return (
+                <span
+                  key={idx}
+                  className="px-2 py-0.5 rounded font-black tracking-tight select-none transition-all duration-150"
+                  style={{
+                    fontSize: `${subtitleConfig.fontSize}px`,
+                    color: isActive ? '#09090b' : isPassed ? '#FFFFFF' : '#94A3B8',
+                    backgroundColor: isActive ? customBox : isPassed ? 'rgba(0,0,0,0.5)' : 'transparent',
+                    transform: animTransform,
+                  }}
+                >
+                  {displayText}
+                </span>
+              );
+            }
 
             // 1. Hormozi Viral Pop
             if (subtitleConfig.preset === 'hormozi') {
@@ -293,20 +355,16 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
                 <span
                   key={idx}
                   className={`font-black tracking-wide uppercase transition-all duration-100 select-none ${
-                    isActive
-                      ? 'scale-115 z-10'
-                      : isPassed
-                      ? 'text-white'
-                      : 'text-white/80'
+                    isActive ? 'scale-115 z-10' : ''
                   }`}
                   style={{
                     fontSize: `${subtitleConfig.fontSize}px`,
-                    color: isActive ? customHighlight : isPowerWord ? '#FDE047' : '#FFFFFF',
+                    color: wordColor,
                     WebkitTextStroke: '2.5px #000000',
                     textShadow: isActive
-                      ? `0 0 20px ${customHighlight}99, 0 4px 10px rgba(0,0,0,1)`
+                      ? `0 0 20px ${wordColor}99, 0 4px 10px rgba(0,0,0,1)`
                       : '0 3px 6px rgba(0,0,0,1)',
-                    transform: isActive ? 'scale(1.15) translateY(-2px)' : 'scale(1)',
+                    transform: animTransform,
                   }}
                 >
                   {displayText}
@@ -319,17 +377,15 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
               return (
                 <span
                   key={idx}
-                  className={`font-black tracking-tight uppercase transition-all duration-100 select-none ${
-                    isActive ? 'scale-120 z-10' : 'text-amber-300'
-                  }`}
+                  className="font-black tracking-tight uppercase transition-all duration-100 select-none"
                   style={{
                     fontSize: `${subtitleConfig.fontSize}px`,
-                    color: isActive ? customHighlight : '#FDE047',
+                    color: wordColor,
                     WebkitTextStroke: '2px #09090b',
                     textShadow: isActive
-                      ? `0 0 16px ${customHighlight}, 0 4px 8px rgba(0,0,0,1)`
+                      ? `0 0 16px ${wordColor}, 0 4px 8px rgba(0,0,0,1)`
                       : '0 3px 6px rgba(0,0,0,1)',
-                    transform: isActive ? 'scale(1.18)' : 'scale(1)',
+                    transform: animTransform,
                   }}
                 >
                   {displayText}
@@ -337,18 +393,92 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
               );
             }
 
-            // 3. Ali Abdaal Clean Aesthetic
+            // 3. CapCut 3D Comic
+            if (subtitleConfig.preset === 'capcut_3d') {
+              return (
+                <span
+                  key={idx}
+                  className="font-black tracking-tighter uppercase transition-all duration-150 select-none inline-block"
+                  style={{
+                    fontSize: `${subtitleConfig.fontSize * 1.05}px`,
+                    color: wordColor,
+                    WebkitTextStroke: '2px #000000',
+                    textShadow: isActive
+                      ? `3px 3px 0 #000, 5px 5px 0 #F43F5E, 0 0 20px ${wordColor}88`
+                      : '2px 2px 0 #000',
+                    transform: animTransform,
+                  }}
+                >
+                  {displayText}
+                </span>
+              );
+            }
+
+            // 4. Iman Gadzhi Luxury
+            if (subtitleConfig.preset === 'iman_gadzhi') {
+              return (
+                <span
+                  key={idx}
+                  className="font-serif tracking-widest transition-all duration-200 select-none"
+                  style={{
+                    fontSize: `${subtitleConfig.fontSize}px`,
+                    color: isActive ? customHighlight : isPassed ? '#E2E8F0' : '#64748B',
+                    textShadow: isActive ? `0 0 16px ${customHighlight}99` : 'none',
+                    borderBottom: isActive ? `2px solid ${customHighlight}` : 'none',
+                    paddingBottom: '2px',
+                    transform: animTransform,
+                  }}
+                >
+                  {displayText}
+                </span>
+              );
+            }
+
+            // 5. Cyberpunk Neon
+            if (subtitleConfig.preset === 'neon_cyber') {
+              return (
+                <span
+                  key={idx}
+                  className="font-mono font-black tracking-wider uppercase transition-all duration-100 select-none"
+                  style={{
+                    fontSize: `${subtitleConfig.fontSize}px`,
+                    color: wordColor,
+                    textShadow: isActive
+                      ? `0 0 10px #06B6D4, 0 0 25px #D946EF, 0 0 40px ${wordColor}`
+                      : '0 2px 4px rgba(0,0,0,0.8)',
+                    transform: animTransform,
+                  }}
+                >
+                  {displayText}
+                </span>
+              );
+            }
+
+            // 6. Fluid Karaoke Wave
+            if (subtitleConfig.preset === 'karaoke_sweep') {
+              return (
+                <span
+                  key={idx}
+                  className="font-extrabold tracking-tight transition-all duration-100 select-none"
+                  style={{
+                    fontSize: `${subtitleConfig.fontSize}px`,
+                    color: wordColor,
+                    WebkitTextStroke: '1.5px #000000',
+                    textShadow: isActive ? `0 0 16px ${wordColor}88` : 'none',
+                    transform: animTransform,
+                  }}
+                >
+                  {displayText}
+                </span>
+              );
+            }
+
+            // 7. Ali Abdaal Clean Aesthetic
             if (subtitleConfig.preset === 'ali_aesthetic') {
               return (
                 <span
                   key={idx}
-                  className={`font-semibold tracking-normal transition-all duration-150 select-none ${
-                    isActive
-                      ? 'scale-105 font-bold'
-                      : isPassed
-                      ? 'text-slate-200'
-                      : 'text-slate-400'
-                  }`}
+                  className="font-semibold tracking-normal transition-all duration-150 select-none"
                   style={{
                     fontSize: `${subtitleConfig.fontSize}px`,
                     color: isActive ? customHighlight : undefined,
@@ -358,6 +488,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
                     textDecoration: isActive ? 'underline' : 'none',
                     textDecorationColor: customHighlight,
                     textUnderlineOffset: '4px',
+                    transform: animTransform,
                   }}
                 >
                   {displayText}
@@ -365,19 +496,17 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
               );
             }
 
-            // 4. High-Contrast Word Box
+            // 8. High-Contrast Word Box
             if (subtitleConfig.preset === 'minimal_box') {
               return (
                 <span
                   key={idx}
-                  className={`px-2 py-0.5 rounded-lg font-bold transition-all select-none ${
-                    isActive
-                      ? 'text-slate-950 font-black scale-110 shadow-lg'
-                      : 'bg-black/60 text-white'
-                  }`}
+                  className="px-2 py-0.5 rounded-lg font-bold transition-all select-none"
                   style={{
                     fontSize: `${subtitleConfig.fontSize * 0.9}px`,
-                    backgroundColor: isActive ? customHighlight : undefined,
+                    backgroundColor: isActive ? customHighlight : 'rgba(0,0,0,0.6)',
+                    color: isActive ? '#020617' : '#FFFFFF',
+                    transform: animTransform,
                   }}
                 >
                   {displayText}
@@ -385,20 +514,17 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
               );
             }
 
-            // 5. Cinema Documentary
+            // 9. Cinema Documentary
             if (subtitleConfig.preset === 'documentary') {
               return (
                 <span
                   key={idx}
-                  className={`font-medium tracking-wider transition-all duration-150 select-none ${
-                    isActive
-                      ? 'text-amber-300 font-bold scale-105'
-                      : 'text-slate-200/90'
-                  }`}
+                  className="font-medium tracking-wider transition-all duration-150 select-none"
                   style={{
                     fontSize: `${subtitleConfig.fontSize * 0.95}px`,
                     color: isActive ? customHighlight : undefined,
                     textShadow: '0 2px 6px rgba(0,0,0,0.95)',
+                    transform: animTransform,
                   }}
                 >
                   {displayText}
@@ -406,20 +532,19 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
               );
             }
 
-            // 6. Default: TikTok Minimalist
+            // 10. Default: TikTok Minimalist
             return (
               <span
                 key={idx}
-                className={`font-extrabold tracking-tight transition-all duration-100 select-none ${
-                  isActive ? 'scale-110 z-10' : 'text-white'
-                }`}
+                className="font-extrabold tracking-tight transition-all duration-100 select-none"
                 style={{
                   fontSize: `${subtitleConfig.fontSize}px`,
-                  color: isActive ? customHighlight : '#FFFFFF',
+                  color: wordColor,
                   WebkitTextStroke: '1px #000000',
                   textShadow: isActive
-                    ? `0 0 12px ${customHighlight}bb, 0 3px 6px rgba(0,0,0,1)`
+                    ? `0 0 12px ${wordColor}bb, 0 3px 6px rgba(0,0,0,1)`
                     : '0 2px 6px rgba(0,0,0,0.9)',
+                  transform: animTransform,
                 }}
               >
                 {displayText}

@@ -1,15 +1,33 @@
 import React from 'react';
-import { Video, Sparkles, Cpu, Film, TrendingUp, Sliders, FileText, Clapperboard } from 'lucide-react';
+import {
+  Video,
+  Sparkles,
+  Cpu,
+  Film,
+  TrendingUp,
+  Sliders,
+  FileText,
+  Clapperboard,
+  Dna,
+  BookOpen,
+  Search,
+  Command,
+  HelpCircle,
+  Share2,
+} from 'lucide-react';
 import { EngineType, LocalLLMConfig } from '../types';
 
 interface HeaderProps {
-  activeTab: 'studio' | 'trends' | 'scripts' | 'grading' | 'prompts';
-  setActiveTab: (tab: 'studio' | 'trends' | 'scripts' | 'grading' | 'prompts') => void;
+  activeTab: 'studio' | 'trends' | 'scripts' | 'grading' | 'prompts' | 'science' | 'text2video' | 'notepad';
+  setActiveTab: (tab: 'studio' | 'trends' | 'scripts' | 'grading' | 'prompts' | 'science' | 'text2video' | 'notepad') => void;
   engine: EngineType;
   localConfig: LocalLLMConfig;
   onOpenEngineModal: () => void;
   onAnalyzeClips: () => void;
   isAnalyzing: boolean;
+  onOpenCommandPalette?: () => void;
+  onOpenShortcuts?: () => void;
+  onOpenClientShareModal?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -20,6 +38,9 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenEngineModal,
   onAnalyzeClips,
   isAnalyzing,
+  onOpenCommandPalette,
+  onOpenShortcuts,
+  onOpenClientShareModal,
 }) => {
   return (
     <header className="sticky top-0 z-40 bg-white/85 backdrop-blur-2xl border-b border-slate-200/75 shadow-[0_4px_20px_-4px_rgba(15,23,42,0.04)]">
@@ -105,10 +126,89 @@ export const Header: React.FC<HeaderProps> = ({
             <Clapperboard className="w-3.5 h-3.5 text-blue-600" />
             <span>Video Prompts</span>
           </button>
+
+          {/* Dedicated Creator Notepad & AI Co-Pilot Tab */}
+          <button
+            onClick={() => setActiveTab('notepad')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg transition-all whitespace-nowrap ${
+              activeTab === 'notepad'
+                ? 'bg-white text-amber-700 shadow-sm border border-slate-200/70 font-semibold'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-white/60 font-medium'
+            }`}
+          >
+            <BookOpen className="w-3.5 h-3.5 text-amber-600" />
+            <span>Creator Notepad</span>
+          </button>
+
+          {/* SIDE QUEST 1: BioScience Matrix */}
+          <button
+            onClick={() => setActiveTab('science')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg transition-all whitespace-nowrap ${
+              activeTab === 'science'
+                ? 'bg-white text-blue-700 shadow-sm border border-slate-200/70 font-semibold'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-white/60 font-medium'
+            }`}
+          >
+            <Dna className="w-3.5 h-3.5 text-emerald-600" />
+            <span>BioScience</span>
+            <span className="text-[9px] px-1 py-0.2 rounded font-bold bg-emerald-100 text-emerald-800 border border-emerald-300/60 uppercase">
+              Quest
+            </span>
+          </button>
+
+          {/* SIDE QUEST 2: Text to Video Generator */}
+          <button
+            onClick={() => setActiveTab('text2video')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg transition-all whitespace-nowrap ${
+              activeTab === 'text2video'
+                ? 'bg-white text-indigo-700 shadow-sm border border-slate-200/70 font-semibold'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-white/60 font-medium'
+            }`}
+          >
+            <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
+            <span>Text-to-Video</span>
+            <span className="text-[9px] px-1 py-0.2 rounded font-bold bg-indigo-100 text-indigo-800 border border-indigo-300/60 uppercase">
+              Quest
+            </span>
+          </button>
         </nav>
 
         {/* Zone 3: AI Engine Switcher & Primary Action */}
         <div className="flex items-center gap-2.5 shrink-0">
+          {/* Command Palette Trigger */}
+          <button
+            onClick={onOpenCommandPalette}
+            className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-xl bg-slate-100 hover:bg-slate-200/80 border border-slate-200 text-slate-600 transition-colors cursor-pointer"
+            title="Open Command Palette (⌘K)"
+          >
+            <Search className="w-3.5 h-3.5 text-slate-500" />
+            <kbd className="text-[10px] font-mono font-bold bg-white px-1.5 py-0.5 rounded border border-slate-200 shadow-xs">
+              ⌘K
+            </kbd>
+          </button>
+
+          {/* Shortcuts Modal Trigger */}
+          <button
+            onClick={onOpenShortcuts}
+            className="p-1.5 rounded-xl bg-slate-100 hover:bg-slate-200/80 border border-slate-200 text-slate-600 transition-colors cursor-pointer"
+            title="Keyboard Shortcuts (?)"
+          >
+            <HelpCircle className="w-4 h-4" />
+          </button>
+
+          {/* Client Share & Standalone Download Button */}
+          {onOpenClientShareModal && (
+            <button
+              onClick={onOpenClientShareModal}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white transition-all shadow-xs hover:shadow cursor-pointer"
+              title="Share live web preview link with clients or download the 1-click standalone runnable package"
+            >
+              <Share2 className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Share &amp; Export</span>
+              <span className="sm:hidden">Share</span>
+            </button>
+          )}
+
           {/* Engine Selector Button */}
           <button
             onClick={onOpenEngineModal}
@@ -118,7 +218,7 @@ export const Header: React.FC<HeaderProps> = ({
             <Cpu className="w-3.5 h-3.5 text-blue-600" />
             <span className="hidden sm:inline text-slate-500">Model:</span>
             <span className="font-semibold text-slate-900">
-              {engine === 'local' ? `Local (${localConfig.model || 'Ollama'})` : 'Gemini 3.8 Flash'}
+              {engine === 'local' ? `Local (${localConfig.model || 'Ollama'})` : 'Gemini 2.5 Flash'}
             </span>
             <span
               className={`w-2 h-2 rounded-full ${

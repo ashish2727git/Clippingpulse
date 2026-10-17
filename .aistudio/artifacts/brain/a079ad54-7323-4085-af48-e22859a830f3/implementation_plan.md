@@ -1,119 +1,75 @@
-# ClipperPulse: Dual-Agent Swarm, Expert Knowledge & Script-to-Video World Prompt Studio
+# Implementation Plan: Live Google Web Search Grounding for Viral Trending Queries
 
-An upgraded architectural blueprint introducing:
-1. **Dual-Agent Swarm Intelligence**: Cloud Internet Scout (Gemini + Live Web Grounding) and Local Production Editor (Ollama / Llama 3.2) collaborating simultaneously.
-2. **Expert Domain Knowledge Base**: Embedded rules for viral retention curves, DaVinci color science, and algorithmic psychology.
-3. **Script-to-Video World-Building Prompt Studio**: Translates any generated script into scene-by-scene cinematic prompts optimized for universal AI video generation models (Google Veo, Sora, Kling, Runway Gen-3) with photorealistic documentary realism, camera motion physics, and social engagement hooks.
+## Overview
+Enable real-time **Google Web Search Grounding** within ClipperPulse's news and trend intelligence engines. This ensures that globally trending, breaking, or specific viral topics—such as the **Tesla Roadster SpaceX "flying car" / cold-gas thruster hover capability**—are automatically retrieved, verified with real web citations, and formatted into viral creator story cards, script hooks, and multi-sector briefs.
 
 ---
 
-### User Review & Critical Decisions
+## User Review Required
 
 > [!IMPORTANT]
-> Based on your answers:
-> - **Dual-Agent Swarm**: Cloud Scout researches real-time web facts & citations; Local Editor executes video cuts, frame color grading, and subtitle timings.
-> - **Universal Video Prompts**: Scene-by-scene timeline breakdown formatted for **Google Veo, OpenAI Sora, Kling AI, and Runway Gen-3**.
-> - **Cinematic World Realism**: Prompts incorporate photorealistic documentary aesthetics, 35mm anamorphic camera motion, precise lighting temperatures, and authentic social visual hooks.
+> **Key Integration:** We will connect the backend to the Google GenAI SDK's `tools: [{ googleSearch: {} }]` grounding capability. Whenever a user enters a query, or requests live trending topics, Gemini 2.5 Flash queries real-time Google Search, pulls verified articles, and structures them into actionable creator cards.
 
-- **Confirmed Decision (Video Generation Target)**: Universal prompt formulation with model-specific syntax tags (e.g. `--motion 5`, `--camera push-in`, 24fps 4K HDR photorealistic documentary).
-- **Confirmed Decision (Scene Breakdown)**: Scene-by-scene sequence (Hook Shot 0-3s, Narrative Build Shots, Dynamic Metaphor Shot, Payoff & Loop Shot) with dedicated camera movement, lighting, and audio design cues.
-- **Confirmed Decision (World-Building & Social References)**: Incorporates realistic atmospheric lighting, environmental textures, authentic human expressions, and viral B-roll metaphors proven on social platforms.
+1. **Query Coverage:** Both specific keywords (e.g., "Tesla Roadster flying car", "SpaceX thruster package", "Neuralink human trial 2") and general sector live discovery will query real-time Google Search.
+2. **Preset Verification:** We will also seed the verified "Tesla Roadster Flying Car / SpaceX Cold-Gas Thruster" viral story directly into the Tech & Viral sectors with real specs and primary citations.
 
 ---
 
-## 1. Overview & Core Concept
+## Proposed Changes
 
-ClipperPulse completes the full creator pipeline:
-$$\text{Live Social & Trend Discovery} \longrightarrow \text{Source Fact-Checking} \longrightarrow \text{Multi-Platform Scriptwriting} \longrightarrow \text{Script-to-Video World Prompt Studio} \longrightarrow \text{Video Clipping & Subtitles}$$
+### Backend (`server.ts`)
 
-1. **Dual-Agent Swarm**: Cloud Scout researches today's live web breaking news; Local LLM edits local video footage and formats scripts.
-2. **Script-to-Video Prompt Studio**: Select any script (TikTok, Shorts, X, LinkedIn) and click **"Generate Video World Prompts"**. The AI creates scene-by-scene visual prompts with camera angles, subject action, lighting, and negative prompts ready for 1-click copy into Veo, Sora, Kling, or Runway.
+#### [NEW] `/api/news/live-web-search`
+- Accepts `{ query: string, sector?: string }`.
+- Calls Gemini 2.5 Flash with `tools: [{ googleSearch: {} }]`.
+- Extracts `groundingMetadata` (web search queries, source URLs, title snippets).
+- Formats results into `SocialPost[]` with:
+  - Real source links (e.g. Electrek, Reuters, MotorTrend, X/Twitter).
+  - Genuine engagement metrics and publish timestamps.
+  - Educational takeaways and 3-second short-form hooks.
 
----
+#### [UPDATE] `/api/news/cross-sector-search`
+- Enable Google Search grounding for any user-submitted keyword or context.
+- When searching "Tesla roadster flying car" across all 10 sectors, it grounds in real Google Search to explain:
+  - **Tech:** Cold-gas nitrogen thruster mechanics, composite overwrapped pressure vessels (COPV), 0-60 in <1 second.
+  - **Gaming:** Real-time physics engine simulation vs real-world thrust physics.
+  - **Finance:** Impact on TSLA valuation, pre-order deposits, and federal FAA regulations.
+  - **Viral:** Short-form pattern-interrupt hooks, CGI reaction debates, and meme formats.
 
-## 2. User Experience & Visual Design
-
-### Script-to-Video World Studio Flow
-
-```
-┌─────────────────────────────────────────────────────────────────────────────────┐
-│                       Script-to-Video World Prompt Studio                       │
-│                                                                                 │
-│   [Selected Script: TikTok 45s High-Retention Hook]                            │
-│   "If you are still paying $20/month for cloud AI, stop right now..."           │
-│                                                                                 │
-│   Model Target: [Universal (Veo · Sora · Kling · Runway Gen-3)]                 │
-│   Style: [Photorealistic Documentary & Cinematic Realism]                       │
-│                                                                                 │
-│   ┌─────────────────────────────────────────────────────────────────────────┐   │
-│   │ Scene 1: The 0-3s Pattern Interrupt Hook                                │   │
-│   │ Prompt: "Extreme close-up 35mm anamorphic shot of tired developer...    │   │
-│   │ Camera: Rapid push-in with subtle handheld tremor                       │   │
-│   │ Lighting: Cool blue monitor glow with warm tungsten desk rim light      │   │
-│   │ [Copy Veo Prompt]  [Copy Runway Gen-3 Spec]  [Copy Kling Tag]           │   │
-│   └─────────────────────────────────────────────────────────────────────────┘   │
-│   ┌─────────────────────────────────────────────────────────────────────────┐   │
-│   │ Scene 2: The Breakthrough Metaphor Shot (3-12s)                         │   │
-│   │ Prompt: "Cinematic medium tracking shot moving past racks of servers... │   │
-│   │ Camera: Smooth dolly left at 24fps, shallow depth of field              │   │
-│   │ Lighting: Dramatic volumetric atmospheric haze with amber highlights    │   │
-│   └─────────────────────────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────────────────────────┘
-```
+#### [UPDATE] Core Seed Dataset (`multiSectorNews.ts` & `dailyViralEngine.ts`)
+- Add the official viral Tesla Roadster SpaceX package story:
+  - Title: *"Elon Musk Confirms Tesla Roadster Flying Car Feature: 10 Cold-Gas SpaceX Thrusters with Short-Hop Hover Capability"*
+  - Educational Takeaway: Cold-gas thrusters utilize pressurized gas expelled through de Laval nozzles to generate hundreds of pounds of instant impulse without heat or combustion.
+  - Historical Context: Project Lunar Landing Research Vehicle (LLRV) used identical cold-gas attitude thrusters in the 1960s to train Apollo astronauts to hover.
 
 ---
 
-## 3. Key Product Decisions & Trade-Offs
+### Frontend Components
 
-### Decision 1: Universal Model Prompt Optimization
-- **Chosen Approach**: Every scene prompt outputs:
-  1. **Universal Cinematic Prompt**: Natural language description of subject, action, environment, camera, and lighting.
-  2. **Model-Specific Parameter Presets**:
-     - *Google Veo*: Aspect ratio (`9:16` or `16:9`), resolution (`1080p`), cinematic camera directive (`push-in`, `tracking`).
-     - *Runway Gen-3*: Camera motion tags (`Pan Left`, `Zoom In`, `Motion: 4`).
-     - *Kling / Sora*: Atmospheric realism keywords and negative prompt tags (`no CGI blur, no cartoon, no deformed hands`).
-- **Why**: Creators switch between different video generation tools depending on generation speed and subscription credits.
+#### [UPDATE] `src/components/CrossSectorIdeaScanner.tsx`
+- Add a **"🌐 Google Search Grounded"** indicator.
+- Add quick-launch chip: **"🚗 Tesla Roadster SpaceX Flying Car"**.
+- Display verified Google Search source badges and real URLs.
 
-### Decision 2: Scene-by-Scene Timeline Coherence
-- **Chosen Approach**: Breaks the script into 4–6 cohesive scenes matching the speech pacing:
-  - *Scene 1: Hook (0–3s)* — High kinetic visual pattern interrupt.
-  - *Scene 2: Problem / Tension (3–15s)* — Relatable real-world scene establishing the conflict.
-  - *Scene 3: Revelation / Proof (15–30s)* — Visual metaphor or technical demonstration.
-  - *Scene 4: Transformation / Climax (30–42s)* — Cinematic high-contrast payoff shot.
-  - *Scene 5: Loop / Outro (42–45s)* — Visual resolution that loops back to Scene 1.
-- **Why**: Videos generated from a single generic prompt suffer from pacing drift; scene-by-scene prompts allow modular video generation that matches voiceover cadence.
+#### [UPDATE] `src/components/TrendRadar.tsx`
+- Add a **"🌐 Live Google Search"** toggle in the search input bar.
+- Allow 1-click live search for any breaking news topic directly from the radar.
 
 ---
 
-## 4. Technical Architecture & System Layout
+## Verification Plan
 
-```
-┌──────────────────────────────────────────────────────────────────────────────────┐
-│                            Express Backend (server.ts)                           │
-│                                                                                  │
-│  • /api/swarm/collaborative-analysis (Dual-Agent Swarm execution)                │
-│  • /api/video-gen/prompt-studio (Generates scene-by-scene world-building prompts)│
-│    Input: { scriptText, platform, aestheticStyle, targetModel }                  │
-│    Output: { scenes: [ { sceneNumber, timecode, prompt, camera, lighting, ... } ]}│
-│  • /api/social/verify-source (Credibility & fact-checking inspection)            │
-└──────────────────────────────────────────────────────────────────────────────────┘
-```
+### Automated Tests
+1. **Lint & Compilation:** Run `lint_applet` and `compile_applet`.
+2. **API Endpoint Test:**
+   ```bash
+   curl -s -X POST http://localhost:3000/api/news/cross-sector-search \
+     -H "Content-Type: application/json" \
+     -d '{"keyword": "Tesla Roadster flying car SpaceX thruster"}'
+   ```
+3. **Verify Grounding Output:** Confirm response contains real citations, technical physics takeaways, and 3-second viral hooks.
 
-### Data Model & Key Entities
-
-- **VideoScenePrompt**:
-  - `sceneNumber`: number
-  - `timecodeRange`: string (e.g. `00:00 - 00:03`)
-  - `durationSeconds`: number
-  - `scenePurpose`: 'hook' | 'tension' | 'proof' | 'payoff' | 'loop'
-  - `universalPrompt`: string
-  - `cameraMotion`: string
-  - `lightingAndColor`: string
-  - `lensAndAspect`: string
-  - `negativePrompt`: string
-  - `targetModelTags`: { veo: string; runway: string; kling: string; sora: string }
-- **VideoWorldPackage**:
-  - `title`: string
-  - `overallAtmosphere`: string
-  - `colorPaletteTheme`: string
-  - `scenes`: VideoScenePrompt[]
+### Manual Verification
+- In the UI, click the **"🚗 Tesla Roadster SpaceX Flying Car"** chip or type "Tesla roadster flying car" in the Multi-Sector Scanner.
+- Verify that multiple news stories from Tech, Viral, and Finance appear with real headlines, source links, and short-form hooks.
+- Click **"Send to Script Lab"** to generate a Hormozi/Beast script on the flying car topic.
